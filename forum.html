@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community — Bible Explorer</title>
+  <meta name="description" content="Read and share short reflections on daily Bible Explorer lessons in the community forum.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="nav-brand"><img src="assets/logo.svg" alt="Bible Explorer logo">Bible Explorer</a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="reading-plan.html">Reading Plan</a></li>
+        <li><a href="forum.html">Community</a></li>
+        <li><a href="signup.html" class="btn btn-primary" style="padding:0.5em 1.2em;">Get E-Copy</a></li>
+        <li><a href="buy.html" class="btn btn-outline" style="padding:0.5em 1.2em;">Buy Print</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:2.5rem;">
+      <div class="container">
+        <span class="eyebrow">Community Notes</span>
+        <h1>Share What You're Learning</h1>
+        <p style="max-width:680px;">A simple, public space where readers post a short reflection from their daily lesson. Sign in with just your email to post — no password needed.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div id="forum-not-ready" class="form-message error" style="display:none; max-width:100%; margin-bottom:2rem;">
+          The community forum isn't connected yet — the site owner still needs to add Supabase credentials in js/config.js.
+        </div>
+
+        <div class="forum-layout">
+          <aside>
+            <div id="auth-box" class="auth-box">
+              <h3 style="margin-top:0;">Sign In to Post</h3>
+              <p class="field-hint">Enter your email and we'll send you a magic link — no password to remember.</p>
+              <form id="login-form">
+                <div class="field">
+                  <label for="login-email">Email address</label>
+                  <input type="email" id="login-email" name="email" required>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-block">Email Me a Login Link</button>
+                <div id="login-message" class="form-message" role="status"></div>
+              </form>
+            </div>
+
+            <div id="composer-box" class="card" style="display:none;">
+              <p id="signed-in-as" class="field-hint mb-0"></p>
+              <button id="sign-out-btn" class="btn btn-outline" style="padding:0.4em 1em; font-size:0.85rem; margin:0.6rem 0 1.2rem;">Sign Out</button>
+              <form id="post-form">
+                <div class="field">
+                  <label for="display-name">Display name</label>
+                  <input type="text" id="display-name" name="display_name" placeholder="e.g. Ada, age 9" maxlength="60">
+                </div>
+                <div class="field">
+                  <label for="post-content">Your reflection</label>
+                  <textarea id="post-content" name="content" rows="4" maxlength="500" placeholder="What did today's lesson teach you?" required></textarea>
+                  <div id="char-count" class="char-count">0 / 500</div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Share Reflection</button>
+                <div id="post-message" class="form-message" role="status"></div>
+              </form>
+            </div>
+          </aside>
+
+          <div>
+            <h3 style="margin-top:0;">Recent Reflections</h3>
+            <div id="forum-feed">
+              <p class="empty-state">Loading reflections…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="nav-brand" style="color:#fff;"><img src="assets/logo.svg" alt="">Bible Explorer</div>
+          <p>A daily devotional that helps kids explore the whole Bible, one short lesson at a time — in print and online.</p>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="about.html">About the Devotional</a></li>
+            <li><a href="reading-plan.html">Reading Plan</a></li>
+            <li><a href="forum.html">Community Notes</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Get Involved</h4>
+          <ul>
+            <li><a href="signup.html">Free E-Copy Signup</a></li>
+            <li><a href="buy.html">Buy on Amazon</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© <span id="year"></span> Bible Explorer. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/forum.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get a Free E-Copy — Bible Explorer</title>
+  <meta name="description" content="Sign up to get free Bible Explorer e-copies delivered to your inbox, anywhere in the world.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="nav-brand"><img src="assets/logo.svg" alt="Bible Explorer logo">Bible Explorer</a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="reading-plan.html">Reading Plan</a></li>
+        <li><a href="forum.html">Community</a></li>
+        <li><a href="signup.html" class="btn btn-primary" style="padding:0.5em 1.2em;">Get E-Copy</a></li>
+        <li><a href="buy.html" class="btn btn-outline" style="padding:0.5em 1.2em;">Buy Print</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:3rem;">
+      <div class="container text-center">
+        <span class="eyebrow">Free, Worldwide</span>
+        <h1>Get Bible Explorer E-Copies Delivered to You</h1>
+        <p style="max-width:600px; margin:0 auto;">Sign up below and we'll send free e-copies of the devotional straight to your inbox — wherever in the world you're reading from.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <form id="signup-form" class="form-panel" novalidate>
+          <div class="field">
+            <label for="name">Your name</label>
+            <input type="text" id="name" name="name" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" autocomplete="email" required>
+          </div>
+          <div class="field">
+            <label for="country">Country</label>
+            <input type="text" id="country" name="country" placeholder="e.g. Nigeria, Canada, Philippines…" autocomplete="country-name">
+            <div class="field-hint">We deliver worldwide — just let us know where you're joining from.</div>
+          </div>
+          <div class="field">
+            <label for="age_group">Child's age group (optional)</label>
+            <select id="age_group" name="age_group">
+              <option value="">Prefer not to say</option>
+              <option value="4-6">4–6 years</option>
+              <option value="7-9">7–9 years</option>
+              <option value="10-12">10–12 years</option>
+              <option value="13+">13+ years</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Get My Free E-Copy</button>
+          <div id="signup-message" class="form-message" role="status"></div>
+        </form>
+        <p class="text-center field-hint mt-2">Prefer a print copy on your shelf? <a href="buy.html">Buy Bible Explorer on Amazon</a>.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="nav-brand" style="color:#fff;"><img src="assets/logo.svg" alt="">Bible Explorer</div>
+          <p>A daily devotional that helps kids explore the whole Bible, one short lesson at a time — in print and online.</p>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="about.html">About the Devotional</a></li>
+            <li><a href="reading-plan.html">Reading Plan</a></li>
+            <li><a href="forum.html">Community Notes</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Get Involved</h4>
+          <ul>
+            <li><a href="signup.html">Free E-Copy Signup</a></li>
+            <li><a href="buy.html">Buy on Amazon</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© <span id="year"></span> Bible Explorer. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/signup.js"></script>
+  <script src="js/nav.js"></script>
+</body>
+</html>

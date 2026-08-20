@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy the Print Book — Bible Explorer</title>
+  <meta name="description" content="Buy the Bible Explorer print devotional on Amazon — 7 volumes and counting, each covering 90 days of Bible reading.">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="nav-brand"><img src="assets/logo.svg" alt="Bible Explorer logo">Bible Explorer</a>
+      <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="reading-plan.html">Reading Plan</a></li>
+        <li><a href="forum.html">Community</a></li>
+        <li><a href="signup.html" class="btn btn-primary" style="padding:0.5em 1.2em;">Get E-Copy</a></li>
+        <li><a href="buy.html" class="btn btn-outline" style="padding:0.5em 1.2em;">Buy Print</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:2rem;">
+      <div class="container text-center">
+        <span class="eyebrow">Print Edition</span>
+        <h1>Bring Bible Explorer Home</h1>
+        <p style="max-width:620px; margin:0 auto;">Bible Explorer is published in volumes — each one covers 90 days of daily Bible reading and devotional. There are 7 volumes so far (630 days), with more on the way. Start at Volume 1, or jump to wherever you left off.</p>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="region-grid" id="volume-grid">
+          <!-- Populated by JS from js/config.js AMAZON_VOLUMES -->
+        </div>
+        <p class="text-center field-hint mt-2">All volumes are available on Amazon.ca and ship to most countries worldwide. Ordering from outside Canada? Amazon will show shipping options and estimated delivery at checkout.</p>
+        <p class="text-center field-hint">Prefer a digital copy? <a href="signup.html">Get a free e-copy by email</a> instead.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="nav-brand" style="color:#fff;"><img src="assets/logo.svg" alt="">Bible Explorer</div>
+          <p>A daily devotional that helps kids explore the whole Bible, one short lesson at a time — in print and online.</p>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="about.html">About the Devotional</a></li>
+            <li><a href="reading-plan.html">Reading Plan</a></li>
+            <li><a href="forum.html">Community Notes</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Get Involved</h4>
+          <ul>
+            <li><a href="signup.html">Free E-Copy Signup</a></li>
+            <li><a href="buy.html">Buy on Amazon</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© <span id="year"></span> Bible Explorer. All rights reserved.</div>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var volumes = (window.BIBLE_EXPLORER_CONFIG && window.BIBLE_EXPLORER_CONFIG.AMAZON_VOLUMES) || [];
+      var grid = document.getElementById("volume-grid");
+
+      if (!volumes.length) {
+        grid.innerHTML = '<p class="empty-state">Volumes aren\'t configured yet — check back soon.</p>';
+        return;
+      }
+
+      grid.innerHTML = "";
+      volumes.forEach(function (v) {
+        var card = document.createElement("div");
+        card.className = "region-card";
+        card.innerHTML =
+          '<div class="flag">📘</div>' +
+          "<h3>Volume " + v.volume + "</h3>" +
+          '<p class="field-hint mb-0">' + v.days + "</p>" +
+          '<a class="btn btn-primary btn-block mt-2" target="_blank" rel="noopener" style="margin-top:1rem;">Buy on Amazon</a>';
+        card.querySelector("a").href = v.url;
+        grid.appendChild(card);
+      });
+    });
+  </script>
+  <script src="js/nav.js"></script>
+</body>
+</html>
