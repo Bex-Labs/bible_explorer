@@ -11,17 +11,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
+<body class="admin-body">
 
-  <header class="site-header">
+  <header class="admin-topbar">
     <div class="container nav">
       <a href="index.html" class="nav-brand"><img src="assets/logo.svg" alt="Bible Explorer logo">Bible Explorer</a>
-      <span class="badge">Admin</span>
+      <div class="admin-topbar-right">
+        <span class="badge">Admin</span>
+        <div id="admin-user-bar" class="admin-user" style="display:none;">
+          <span id="admin-signed-in-as"></span>
+          <button id="admin-sign-out-btn" class="btn btn-outline btn-sm">Sign Out</button>
+        </div>
+        <a href="index.html" class="admin-view-site">View Site →</a>
+      </div>
     </div>
   </header>
 
   <main>
-    <section class="section">
+    <section class="section" style="padding-top:2rem;">
       <div class="container">
 
         <div id="admin-not-ready" class="form-message error" style="display:none; max-width:100%; margin-bottom:2rem;">
@@ -31,6 +38,7 @@
         <!-- Sign-in gate -->
         <div id="admin-gate" class="admin-gate" style="display:none;">
           <div class="auth-box">
+            <div class="admin-gate-icon">🔐</div>
             <h1 style="margin-top:0;">Admin Sign In</h1>
             <p class="field-hint">Enter the admin email address and we'll send a magic sign-in link. No password needed.</p>
             <form id="admin-login-form">
@@ -44,8 +52,18 @@
           </div>
         </div>
 
+        <!-- Signed in, but the admin check itself failed (e.g. schema not set up yet) -->
+        <div id="admin-error" class="admin-gate text-center" style="display:none;">
+          <div class="admin-gate-icon">⚠️</div>
+          <h1>Couldn't Check Admin Access</h1>
+          <p>You're signed in, but checking admin permissions failed with an error, most likely because <code>supabase/schema.sql</code> hasn't been run yet (or hasn't been re-run since the admin feature was added). Run/re-run it in the Supabase SQL Editor, then reload this page.</p>
+          <p class="field-hint" id="admin-error-detail"></p>
+          <button id="admin-sign-out-btn-error" class="btn btn-outline">Sign Out</button>
+        </div>
+
         <!-- Signed in, but not an admin -->
         <div id="admin-denied" class="admin-gate text-center" style="display:none;">
+          <div class="admin-gate-icon">🚫</div>
           <h1>Not an Admin Account</h1>
           <p>You're signed in, but this email isn't on the admin allowlist. Ask whoever manages the site to add it in Supabase, or sign out and try a different email.</p>
           <button id="admin-sign-out-btn-denied" class="btn btn-outline">Sign Out</button>
@@ -53,94 +71,112 @@
 
         <!-- Admin content -->
         <div id="admin-content" style="display:none;">
-          <div class="text-center mt-2" style="margin-bottom:2rem;">
-            <p id="admin-signed-in-as" class="field-hint mb-0"></p>
-            <button id="admin-sign-out-btn" class="btn btn-outline btn-sm" style="margin-top:0.6rem;">Sign Out</button>
+
+          <div class="admin-stats">
+            <div class="admin-stat">
+              <div class="num" id="stat-volumes">–</div>
+              <div class="label">Volumes published</div>
+            </div>
+            <div class="admin-stat">
+              <div class="num" id="stat-visible-posts">–</div>
+              <div class="label">Visible posts</div>
+            </div>
+            <div class="admin-stat">
+              <div class="num" id="stat-hidden-posts">–</div>
+              <div class="label">Hidden posts</div>
+            </div>
           </div>
 
-          <!-- Volumes panel -->
-          <div class="admin-panel">
-            <h2>Volumes</h2>
-            <p class="field-hint">Manage the print volumes shown on the Buy page: thumbnail, Amazon link, and e-copy download link. Changes save per row.</p>
+          <div class="admin-tabs">
+            <button type="button" class="admin-tab active" data-tab="volumes">Volumes</button>
+            <button type="button" class="admin-tab" data-tab="moderation">Community Moderation</button>
+          </div>
 
-            <div class="admin-table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Thumb</th>
-                    <th>Vol #</th>
-                    <th>Days</th>
-                    <th>Amazon URL</th>
-                    <th>Download URL</th>
-                    <th>New thumbnail</th>
-                    <th>New PDF</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="volumes-table-body">
-                  <tr><td colspan="8" class="empty-state">Loading…</td></tr>
-                </tbody>
-              </table>
+          <!-- Volumes tab -->
+          <div class="admin-tab-panel active" id="tab-volumes">
+            <div class="admin-panel">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>Volumes</h2>
+                  <p class="field-hint">Thumbnail, Amazon link, and e-copy download per volume. Edit any field and hit Save.</p>
+                </div>
+                <button type="button" id="add-volume-toggle" class="btn btn-primary btn-sm">+ Add Volume</button>
+              </div>
+
+              <div class="volume-cards" id="volumes-grid">
+                <p class="empty-state">Loading volumes…</p>
+              </div>
+
+              <div class="add-volume-panel" id="add-volume-panel">
+                <h3 style="margin-top:0;">Add a New Volume</h3>
+                <form id="add-volume-form">
+                  <div class="admin-form-grid">
+                    <div class="field field-inline">
+                      <label for="new-volume-number">Volume #</label>
+                      <input type="number" id="new-volume-number" name="volume_number" required>
+                    </div>
+                    <div class="field field-inline">
+                      <label for="new-volume-days">Day range</label>
+                      <input type="text" id="new-volume-days" name="days_label" placeholder="Days 631–720" required>
+                    </div>
+                    <div class="field field-inline">
+                      <label for="new-volume-amazon">Amazon URL</label>
+                      <input type="text" id="new-volume-amazon" name="amazon_url" placeholder="https://amazon.ca/dp/...">
+                    </div>
+                    <div class="field field-inline">
+                      <label for="new-volume-thumb">Thumbnail image</label>
+                      <input type="file" id="new-volume-thumb" name="thumbnail_file" accept="image/*">
+                    </div>
+                    <div class="field field-inline">
+                      <label for="new-volume-pdf">E-copy PDF</label>
+                      <input type="file" id="new-volume-pdf" name="download_file" accept="application/pdf">
+                    </div>
+                    <div class="field field-inline">
+                      <button type="submit" class="btn btn-primary btn-block">Add Volume</button>
+                    </div>
+                  </div>
+                  <div id="add-volume-message" class="form-message" role="status"></div>
+                </form>
+              </div>
             </div>
+          </div>
 
-            <h3>Add a New Volume</h3>
-            <form id="add-volume-form">
-              <div class="admin-form-grid">
-                <div class="field field-inline">
-                  <label for="new-volume-number">Volume #</label>
-                  <input type="number" id="new-volume-number" name="volume_number" required>
-                </div>
-                <div class="field field-inline">
-                  <label for="new-volume-days">Day range</label>
-                  <input type="text" id="new-volume-days" name="days_label" placeholder="Days 631–720" required>
-                </div>
-                <div class="field field-inline">
-                  <label for="new-volume-amazon">Amazon URL</label>
-                  <input type="text" id="new-volume-amazon" name="amazon_url" placeholder="https://amazon.ca/dp/...">
-                </div>
-                <div class="field field-inline">
-                  <label for="new-volume-thumb">Thumbnail image</label>
-                  <input type="file" id="new-volume-thumb" name="thumbnail_file" accept="image/*">
-                </div>
-                <div class="field field-inline">
-                  <label for="new-volume-pdf">E-copy PDF</label>
-                  <input type="file" id="new-volume-pdf" name="download_file" accept="application/pdf">
-                </div>
-                <div class="field field-inline">
-                  <button type="submit" class="btn btn-primary btn-block">Add Volume</button>
+          <!-- Moderation tab -->
+          <div class="admin-tab-panel" id="tab-moderation">
+            <div class="admin-panel">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>Community Moderation</h2>
+                  <p class="field-hint">Posts are visible immediately when readers share them. Hide or delete anything that shouldn't be public.</p>
                 </div>
               </div>
-              <div id="add-volume-message" class="form-message" role="status"></div>
-            </form>
-          </div>
 
-          <!-- Moderation panel -->
-          <div class="admin-panel">
-            <h2>Community Moderation</h2>
-            <p class="field-hint">Posts are visible immediately when readers share them. Hide or delete anything that shouldn't be public.</p>
-
-            <div class="admin-table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Reflection</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="posts-table-body">
-                  <tr><td colspan="5" class="empty-state">Loading…</td></tr>
-                </tbody>
-              </table>
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Reader</th>
+                      <th>Reflection</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="posts-table-body">
+                    <tr><td colspan="5" class="empty-state">Loading…</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
+
         </div>
 
       </div>
     </section>
   </main>
+
+  <div id="admin-toast" class="admin-toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>

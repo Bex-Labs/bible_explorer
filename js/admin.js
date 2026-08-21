@@ -4,17 +4,20 @@
  * is_admin() Postgres function, which checks the signed-in user's
  * email against the `admins` table. See /supabase/schema.sql.
  *
- * Two panels once signed in as an admin:
- *  - Volumes: add/edit/delete rows in the `volumes` table, including
- *    uploading a thumbnail image and an e-copy download file to
- *    Supabase Storage.
+ * Two tabs once signed in as an admin:
+ *  - Volumes: add/edit/delete cards backed by the `volumes` table,
+ *    including uploading a thumbnail image and an e-copy download
+ *    file to Supabase Storage.
  *  - Moderation: hide/unhide or delete any forum post.
  */
 document.addEventListener("DOMContentLoaded", function () {
   const notReadyEl = document.getElementById("admin-not-ready");
   const gateEl = document.getElementById("admin-gate");
+  const errorEl = document.getElementById("admin-error");
+  const errorDetailEl = document.getElementById("admin-error-detail");
   const deniedEl = document.getElementById("admin-denied");
   const contentEl = document.getElementById("admin-content");
+  const userBar = document.getElementById("admin-user-bar");
 
   if (!window.bibleExplorerSupabaseReady) {
     if (notReadyEl) notReadyEl.style.display = "block";
@@ -24,17 +27,38 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const sb = window.bibleExplorerSupabase;
 
+  // =========================================================
+  // Toast helper (replaces browser alert() for a nicer feel)
+  // =========================================================
+  const toastEl = document.getElementById("admin-toast");
+  let toastTimer = null;
+
+  function toast(message, type) {
+    if (!toastEl) return;
+    clearTimeout(toastTimer);
+    toastEl.textContent = message;
+    toastEl.className = "admin-toast show " + (type || "success");
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove("show");
+    }, 4000);
+  }
+
+  // =========================================================
+  // Auth
+  // =========================================================
   const loginForm = document.getElementById("admin-login-form");
   const loginMessage = document.getElementById("admin-login-message");
   const signedInAs = document.getElementById("admin-signed-in-as");
   const signOutBtn = document.getElementById("admin-sign-out-btn");
   const signOutBtnDenied = document.getElementById("admin-sign-out-btn-denied");
+  const signOutBtnError = document.getElementById("admin-sign-out-btn-error");
 
   function showOnly(section) {
-    [gateEl, deniedEl, contentEl].forEach(function (el) {
+    [gateEl, errorEl, deniedEl, contentEl].forEach(function (el) {
       if (el) el.style.display = "none";
     });
-    if (section) section.style.display = "block";
+    if (section) section.style.display = section === contentEl ? "block" : "block";
+    if (userBar) userBar.style.display = section === contentEl ? "flex" : "none";
   }
 
   async function checkAdminAndRender() {
@@ -49,8 +73,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const { data: isAdmin, error } = await sb.rpc("is_admin");
 
     if (error) {
+      // Signed in fine, but the admin check itself failed (most likely
+      // is_admin()/admins don't exist yet because schema.sql hasn't been
+      // run). Show this distinctly rather than silently reverting to
+      // the sign-in form, which looks like the magic link never worked.
       console.error(error);
-      showOnly(gateEl);
+      if (errorDetailEl) errorDetailEl.textContent = "Error: " + (error.message || error);
+      showOnly(errorEl);
       return;
     }
 
@@ -59,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    signedInAs.textContent = "Signed in as " + session.user.email;
+    signedInAs.textContent = session.user.email;
     showOnly(contentEl);
     loadVolumes();
     loadPosts();
@@ -95,7 +124,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  [signOutBtn, signOutBtnDenied].forEach(function (btn) {
+  [signOutBtn, signOutBtnDenied, signOutBtnError].forEach(function (btn) {
     if (!btn) return;
     btn.addEventListener("click", async function () {
       await sb.auth.signOut();
@@ -108,11 +137,46 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // =========================================================
-  // Volumes panel
+  // Tabs
   // =========================================================
-  const volumesTableBody = document.getElementById("volumes-table-body");
+  const tabButtons = document.querySelectorAll(".admin-tab");
+  const tabPanels = {
+    volumes: document.getElementById("tab-volumes"),
+    moderation: document.getElementById("tab-moderation"),
+  };
+
+  tabButtons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      tabButtons.forEach(function (b) { b.classList.remove("active"); });
+      Object.values(tabPanels).forEach(function (p) { if (p) p.classList.remove("active"); });
+      btn.classList.add("active");
+      const panel = tabPanels[btn.dataset.tab];
+      if (panel) panel.classList.add("active");
+    });
+  });
+
+  // =========================================================
+  // Stats
+  // =========================================================
+  const statVolumes = document.getElementById("stat-volumes");
+  const statVisible = document.getElementById("stat-visible-posts");
+  const statHidden = document.getElementById("stat-hidden-posts");
+
+  // =========================================================
+  // Volumes tab
+  // =========================================================
+  const volumesGrid = document.getElementById("volumes-grid");
+  const addVolumeToggle = document.getElementById("add-volume-toggle");
+  const addVolumePanel = document.getElementById("add-volume-panel");
   const addVolumeForm = document.getElementById("add-volume-form");
   const addVolumeMessage = document.getElementById("add-volume-message");
+
+  if (addVolumeToggle) {
+    addVolumeToggle.addEventListener("click", function () {
+      const open = addVolumePanel.classList.toggle("open");
+      addVolumeToggle.textContent = open ? "Cancel" : "+ Add Volume";
+    });
+  }
 
   function slugFile(name) {
     return name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
@@ -129,46 +193,70 @@ document.addEventListener("DOMContentLoaded", function () {
     return data.publicUrl;
   }
 
-  function renderVolumeRow(v) {
-    const tr = document.createElement("tr");
-    tr.dataset.id = v.id;
+  function wireFileButton(fileInput, labelEl, defaultLabel) {
+    fileInput.addEventListener("change", function () {
+      const file = fileInput.files[0];
+      if (file) {
+        labelEl.textContent = "📎 " + (file.name.length > 18 ? file.name.slice(0, 15) + "…" : file.name);
+        labelEl.parentElement.classList.add("has-file");
+      } else {
+        labelEl.textContent = defaultLabel;
+        labelEl.parentElement.classList.remove("has-file");
+      }
+    });
+  }
 
-    tr.innerHTML =
-      '<td>' +
-      (v.thumbnail_url
-        ? '<img class="admin-thumb" src="' + v.thumbnail_url + '" alt="">'
-        : '<div class="admin-thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📘</div>') +
-      "</td>" +
-      '<td><input type="number" class="v-number" value="' + v.volume_number + '" style="width:70px; padding:0.4em;"></td>' +
-      '<td><input type="text" class="v-days" value="' + (v.days_label || "").replace(/"/g, "&quot;") + '" style="width:120px; padding:0.4em;"></td>' +
-      '<td><input type="text" class="v-amazon" value="' + (v.amazon_url || "").replace(/"/g, "&quot;") + '" placeholder="https://amazon.ca/dp/..." style="width:180px; padding:0.4em;"></td>' +
-      '<td><input type="text" class="v-download" value="' + (v.download_url || "").replace(/"/g, "&quot;") + '" placeholder="download URL" style="width:180px; padding:0.4em;"></td>' +
-      '<td>' +
-      '<input type="file" class="v-thumb-file" accept="image/*" style="max-width:130px; font-size:0.78rem;">' +
-      "</td>" +
-      '<td>' +
-      '<input type="file" class="v-download-file" accept="application/pdf" style="max-width:130px; font-size:0.78rem;">' +
-      "</td>" +
-      '<td class="admin-actions">' +
-      '<button type="button" class="btn btn-primary btn-sm v-save">Save</button>' +
-      '<button type="button" class="btn btn-danger btn-sm v-delete">Delete</button>' +
-      "</td>";
+  function renderVolumeCard(v) {
+    const card = document.createElement("div");
+    card.className = "volume-card";
+    card.dataset.id = v.id;
 
-    tr.querySelector(".v-save").addEventListener("click", async function () {
-      const btn = tr.querySelector(".v-save");
+    const esc = function (s) { return (s || "").replace(/"/g, "&quot;"); };
+
+    card.innerHTML =
+      '<div class="volume-card-top">' +
+        '<div class="volume-card-thumb">' +
+          (v.thumbnail_url ? '<img src="' + v.thumbnail_url + '" alt="">' : "📘") +
+        "</div>" +
+        "<div>" +
+          "<h3>Volume " + v.volume_number + "</h3>" +
+          '<div class="vol-days">' + (v.days_label || "") + "</div>" +
+        "</div>" +
+      "</div>" +
+
+      '<div class="field"><label>Volume #</label><input type="number" class="v-number" value="' + v.volume_number + '"></div>' +
+      '<div class="field"><label>Day range</label><input type="text" class="v-days" value="' + esc(v.days_label) + '"></div>' +
+      '<div class="field"><label>Amazon URL</label><input type="text" class="v-amazon" value="' + esc(v.amazon_url) + '" placeholder="https://amazon.ca/dp/..."></div>' +
+      '<div class="field"><label>Download URL</label><input type="text" class="v-download" value="' + esc(v.download_url) + '" placeholder="download URL"></div>' +
+
+      '<div class="file-btn-row">' +
+        '<label class="file-btn"><span class="v-thumb-label">🖼️ Thumbnail</span><input type="file" class="v-thumb-file" accept="image/*"></label>' +
+        '<label class="file-btn"><span class="v-download-label">📄 PDF</span><input type="file" class="v-download-file" accept="application/pdf"></label>' +
+      "</div>" +
+
+      '<div class="volume-card-actions">' +
+        '<button type="button" class="btn btn-primary btn-sm btn-block v-save">Save</button>' +
+        '<button type="button" class="btn btn-danger btn-sm v-delete">Delete</button>' +
+      "</div>";
+
+    wireFileButton(card.querySelector(".v-thumb-file"), card.querySelector(".v-thumb-label"), "🖼️ Thumbnail");
+    wireFileButton(card.querySelector(".v-download-file"), card.querySelector(".v-download-label"), "📄 PDF");
+
+    card.querySelector(".v-save").addEventListener("click", async function () {
+      const btn = card.querySelector(".v-save");
       btn.disabled = true;
       btn.textContent = "Saving…";
 
       try {
         const update = {
-          volume_number: parseInt(tr.querySelector(".v-number").value, 10),
-          days_label: tr.querySelector(".v-days").value.trim(),
-          amazon_url: tr.querySelector(".v-amazon").value.trim() || null,
-          download_url: tr.querySelector(".v-download").value.trim() || null,
+          volume_number: parseInt(card.querySelector(".v-number").value, 10),
+          days_label: card.querySelector(".v-days").value.trim(),
+          amazon_url: card.querySelector(".v-amazon").value.trim() || null,
+          download_url: card.querySelector(".v-download").value.trim() || null,
         };
 
-        const thumbFile = tr.querySelector(".v-thumb-file").files[0];
-        const downloadFile = tr.querySelector(".v-download-file").files[0];
+        const thumbFile = card.querySelector(".v-thumb-file").files[0];
+        const downloadFile = card.querySelector(".v-download-file").files[0];
 
         if (thumbFile) {
           update.thumbnail_url = await uploadVolumeAsset("volume-thumbnails", update.volume_number, thumbFile);
@@ -182,32 +270,34 @@ document.addEventListener("DOMContentLoaded", function () {
         const { error } = await sb.from("volumes").update(update).eq("id", v.id);
         if (error) throw error;
 
+        toast("Volume " + update.volume_number + " saved.", "success");
         loadVolumes();
       } catch (err) {
         console.error(err);
-        alert("Couldn't save that volume: " + (err.message || err));
+        toast("Couldn't save that volume: " + (err.message || err), "error");
       } finally {
         btn.disabled = false;
         btn.textContent = "Save";
       }
     });
 
-    tr.querySelector(".v-delete").addEventListener("click", async function () {
+    card.querySelector(".v-delete").addEventListener("click", async function () {
       if (!confirm("Delete Volume " + v.volume_number + "? This can't be undone.")) return;
       const { error } = await sb.from("volumes").delete().eq("id", v.id);
       if (error) {
         console.error(error);
-        alert("Couldn't delete that volume: " + error.message);
+        toast("Couldn't delete that volume: " + error.message, "error");
         return;
       }
+      toast("Volume " + v.volume_number + " deleted.", "success");
       loadVolumes();
     });
 
-    return tr;
+    return card;
   }
 
   async function loadVolumes() {
-    volumesTableBody.innerHTML = '<tr><td colspan="8" class="empty-state">Loading volumes…</td></tr>';
+    volumesGrid.innerHTML = '<p class="empty-state">Loading volumes…</p>';
     const { data, error } = await sb
       .from("volumes")
       .select("id, volume_number, days_label, amazon_url, thumbnail_url, download_url")
@@ -216,18 +306,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (error) {
       console.error(error);
-      volumesTableBody.innerHTML = '<tr><td colspan="8" class="empty-state">Couldn\'t load volumes.</td></tr>';
+      volumesGrid.innerHTML = '<p class="empty-state">Couldn\'t load volumes.</p>';
       return;
     }
+
+    if (statVolumes) statVolumes.textContent = data ? data.length : "0";
 
     if (!data || data.length === 0) {
-      volumesTableBody.innerHTML = '<tr><td colspan="8" class="empty-state">No volumes yet. Add the first one below.</td></tr>';
+      volumesGrid.innerHTML = '<p class="empty-state">No volumes yet. Add the first one below.</p>';
       return;
     }
 
-    volumesTableBody.innerHTML = "";
+    volumesGrid.innerHTML = "";
     data.forEach(function (v) {
-      volumesTableBody.appendChild(renderVolumeRow(v));
+      volumesGrid.appendChild(renderVolumeCard(v));
     });
   }
 
@@ -271,8 +363,10 @@ document.addEventListener("DOMContentLoaded", function () {
         if (error) throw error;
 
         addVolumeForm.reset();
-        addVolumeMessage.className = "form-message success";
-        addVolumeMessage.textContent = "Volume " + volumeNumber + " added.";
+        addVolumePanel.classList.remove("open");
+        addVolumeToggle.textContent = "+ Add Volume";
+        addVolumeMessage.textContent = "";
+        toast("Volume " + volumeNumber + " added.", "success");
         loadVolumes();
       } catch (err) {
         console.error(err);
@@ -286,9 +380,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // =========================================================
-  // Moderation panel
+  // Moderation tab
   // =========================================================
   const postsTableBody = document.getElementById("posts-table-body");
+
+  function initials(name) {
+    const parts = (name || "A reader").trim().split(/\s+/);
+    return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+  }
 
   function renderPostRow(p) {
     const tr = document.createElement("tr");
@@ -299,10 +398,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     const toggleLabel = p.status === "visible" ? "Hide" : "Unhide";
+    const name = p.display_name || "A reader";
 
     tr.innerHTML =
-      '<td>' + (p.display_name || "A reader") + "</td>" +
-      '<td style="max-width:320px; white-space:normal;">' + p.content.replace(/</g, "&lt;") + "</td>" +
+      '<td><div class="post-author-cell"><span class="post-avatar">' + initials(name) + '</span>' + name + "</div></td>" +
+      '<td class="post-content-cell">' + p.content.replace(/</g, "&lt;") + "</td>" +
       '<td>' + date + "</td>" +
       '<td><span class="status-pill ' + p.status + '">' + p.status + "</span></td>" +
       '<td class="admin-actions">' +
@@ -315,9 +415,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const { error } = await sb.from("posts").update({ status: newStatus }).eq("id", p.id);
       if (error) {
         console.error(error);
-        alert("Couldn't update that post: " + error.message);
+        toast("Couldn't update that post: " + error.message, "error");
         return;
       }
+      toast(newStatus === "hidden" ? "Post hidden." : "Post is visible again.", "success");
       loadPosts();
     });
 
@@ -326,9 +427,10 @@ document.addEventListener("DOMContentLoaded", function () {
       const { error } = await sb.from("posts").delete().eq("id", p.id);
       if (error) {
         console.error(error);
-        alert("Couldn't delete that post: " + error.message);
+        toast("Couldn't delete that post: " + error.message, "error");
         return;
       }
+      toast("Post deleted.", "success");
       loadPosts();
     });
 
@@ -348,6 +450,9 @@ document.addEventListener("DOMContentLoaded", function () {
       postsTableBody.innerHTML = '<tr><td colspan="5" class="empty-state">Couldn\'t load posts.</td></tr>';
       return;
     }
+
+    if (statVisible) statVisible.textContent = data ? data.filter(function (p) { return p.status === "visible"; }).length : "0";
+    if (statHidden) statHidden.textContent = data ? data.filter(function (p) { return p.status === "hidden"; }).length : "0";
 
     if (!data || data.length === 0) {
       postsTableBody.innerHTML = '<tr><td colspan="5" class="empty-state">No posts yet.</td></tr>';
