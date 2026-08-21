@@ -3,7 +3,9 @@
 A daily Bible devotional site for kids. Static HTML/CSS/JS site with a
 [Supabase](https://supabase.com) backend for:
 
-- **Free e-copy signups** (worldwide email list)
+- **Free e-copy requests**: pick a volume, get an instant download link
+  right on the page (no email delivery needed) if that volume has one
+  set up; the request is also logged to a worldwide subscriber list
 - **Buy the print book** (Amazon links + thumbnails, by volume)
 - **Community forum**: a simple micro-blog where readers post short
   reflections on each day's lesson
@@ -24,7 +26,7 @@ bible-explorer/
 ├── index.html          Home page
 ├── about.html           About the devotional
 ├── reading-plan.html    How the reading plan works + sample lessons
-├── signup.html          Free e-copy signup form (writes to Supabase)
+├── signup.html          Request a volume, get an instant download link
 ├── buy.html               Volumes for sale, loaded live from Supabase
 ├── forum.html             Community forum (Supabase Auth + posts)
 ├── admin.html             Admin: manage volumes + moderate posts
@@ -55,9 +57,12 @@ will actually work:
 
 1. **SQL Editor** → paste in the contents of `supabase/schema.sql` and
    run it. This creates:
-   - `subscribers`: name, email, country, age_group (public **insert**
-     only. Nobody can read the list from the client, keeping emails
-     private).
+   - `subscribers`: name, email, country, age_group, plus
+     `requested_volume_number` / `requested_volume_label` (which volume
+     they asked for). Public **insert** only. Nobody can read the list
+     from the client, keeping emails private. Not unique on email: the
+     same person can sign up again later to request a different
+     volume, so each request is its own row.
    - `admins`: an allowlist of emails with admin rights. The script
      seeds it with `bexinnovation@outlook.com`. Add more emails here
      (via SQL Editor or Table Editor) to grant more admins.
@@ -104,7 +109,25 @@ it's only used if the site can't reach Supabase at all.
 To add another admin later, add their email to the `admins` table
 (SQL Editor: `insert into public.admins (email) values ('someone@example.com');`).
 
-## 3. Moderating the community forum
+## 3. How the free e-copy request works
+
+`signup.html` shows a dropdown of every volume in the `volumes` table
+(most recent first) alongside the name/email/country fields. When
+someone submits:
+
+- Their request (including which volume) is saved to `subscribers`.
+- If that volume has a `download_url` set (see above), they immediately
+  see a **Download Volume N Now** button right on the page. No email is
+  sent, it's an instant link, same as clicking Download on `buy.html`.
+- If that volume doesn't have a download link yet, they see a "we've
+  saved your request" message instead, with nothing to click yet.
+
+So the fastest way to make a volume requestable is the same admin step
+as before: add a download link for it in `admin.html`. There's still no
+automated email step, "Actually send the e-copies" below covers that as
+a future option if you want signup to also trigger an email.
+
+## 4. Moderating the community forum
 
 Also on `admin.html`, the **Community Moderation** panel lists every
 post (newest first) with **Hide**/**Unhide** and **Delete** buttons.
@@ -113,7 +136,7 @@ it from the public forum feed right away without deleting it (useful if
 you want to review before permanently removing), and Delete is
 permanent.
 
-## 4. Preview locally
+## 5. Preview locally
 
 Any static file server works, e.g.:
 
@@ -129,7 +152,7 @@ Then open `http://localhost:8080` (or whatever port it prints).
 > some browsers restrict `fetch`/CORS on `file://`. A local server is
 > more reliable, especially for testing the forum/signup.
 
-## 5. Deploy
+## 6. Deploy
 
 Because this is a plain static site, you can deploy it to:
 
@@ -142,7 +165,7 @@ Remember to add the deployed URL to Supabase's **Authentication → URL
 Configuration → Redirect URLs**, or magic-link sign-in on the forum page
 will fail after deployment.
 
-## 6. Pushing to GitHub
+## 7. Pushing to GitHub
 
 The repo already exists at https://github.com/Bex-Labs/bible_explorer.
 From this folder:
@@ -170,10 +193,12 @@ remote has nothing you need to keep.
 
 ## Next steps / ideas
 
-- **Actually send the e-copies**: right now, signups just land in the
-  `subscribers` table. A natural next step is a Supabase Database
-  Webhook on `subscribers` insert → a Supabase Edge Function → an email
-  provider (Resend, Postmark, SendGrid) that emails the PDF/e-copy.
+- **Actually send an email too**: right now, requesting a volume shows
+  an instant download link on the page instead of emailing anything.
+  If you also want a copy emailed (as a backup, or for volumes without
+  a direct download link yet), a natural next step is a Supabase
+  Database Webhook on `subscribers` insert → a Supabase Edge Function →
+  an email provider (Resend, Postmark, SendGrid) that emails the PDF.
 - **More Amazon marketplaces**: links are currently Amazon.ca only. If
   you get dedicated .com/.co.uk listings later, add a second URL column
   (or a small `region` table) and extend `buy.html` / `admin.html` to

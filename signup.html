@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Get a Free E-Copy | Bible Explorer</title>
-  <meta name="description" content="Sign up to get free Bible Explorer e-copies delivered to your inbox, anywhere in the world.">
+  <meta name="description" content="Request a free Bible Explorer e-copy and get an instant download link for the volume you choose, anywhere in the world.">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,8 +32,8 @@
     <section class="hero" style="padding-bottom:3rem;">
       <div class="container text-center">
         <span class="eyebrow">Free, Worldwide</span>
-        <h1>Get Bible Explorer E-Copies Delivered to You</h1>
-        <p style="max-width:600px; margin:0 auto;">Sign up below and we'll send free e-copies of the devotional straight to your inbox, wherever in the world you're reading from.</p>
+        <h1>Get a Free Bible Explorer E-Copy</h1>
+        <p style="max-width:600px; margin:0 auto;">Tell us a bit about yourself and pick the volume you'd like. You'll get an instant download link right here, no waiting on email, wherever in the world you're reading from.</p>
       </div>
     </section>
 
@@ -63,9 +63,25 @@
               <option value="13+">13+ years</option>
             </select>
           </div>
+          <div class="field">
+            <label for="volume_select">Which volume would you like?</label>
+            <select id="volume_select" name="volume_number" required>
+              <option value="">Loading volumes…</option>
+            </select>
+            <div class="field-hint">Not sure? Volume 1 (Days 1–90) is the best place to start.</div>
+          </div>
           <button type="submit" class="btn btn-primary btn-block">Get My Free E-Copy</button>
           <div id="signup-message" class="form-message" role="status"></div>
         </form>
+
+        <div id="signup-download-panel" class="form-panel text-center" style="display:none; margin-top:1.5rem;">
+          <div style="font-size:2rem;">🎉</div>
+          <h2 id="signup-download-title" style="margin-top:0.3rem;"></h2>
+          <p id="signup-download-text"></p>
+          <a id="signup-download-link" class="btn btn-primary btn-block" style="display:none;" target="_blank" rel="noopener">Download Now</a>
+          <button type="button" id="signup-request-another" class="btn btn-outline btn-block mt-2" style="margin-top:0.8rem;">Request Another Volume</button>
+        </div>
+
         <p class="text-center field-hint mt-2">Prefer a print copy on your shelf? <a href="buy.html">Buy Bible Explorer on Amazon</a>.</p>
       </div>
     </section>
@@ -101,6 +117,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/volumes.js"></script>
   <script src="js/signup.js"></script>
   <script src="js/nav.js"></script>
 </body>

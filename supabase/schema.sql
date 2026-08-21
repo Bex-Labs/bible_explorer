@@ -14,11 +14,26 @@
 create table if not exists public.subscribers (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  email text not null unique,
+  email text not null,
   country text,
   age_group text,
+  requested_volume_number int,
+  requested_volume_label text,
   created_at timestamptz not null default now()
 );
+
+-- One row per request, not one row per email: the signup form now lets
+-- someone request a specific volume and get an instant download link,
+-- so the same person may legitimately sign up again later for a
+-- different volume. Drop the old uniqueness constraint if it's still
+-- there from an earlier version of this schema (no-op on a fresh
+-- install where it was never created).
+alter table public.subscribers drop constraint if exists subscribers_email_key;
+
+-- Add the new columns if this table already existed from before the
+-- volume-request feature (no-op on a fresh install).
+alter table public.subscribers add column if not exists requested_volume_number int;
+alter table public.subscribers add column if not exists requested_volume_label text;
 
 alter table public.subscribers enable row level security;
 
@@ -32,7 +47,9 @@ create policy "Public can insert subscribers"
 -- Nobody can read the subscriber list from the client (keeps emails
 -- private). The admin page does not expose this list either: use the
 -- Supabase Dashboard, a service-role key, or an Edge Function to
--- export/email subscribers.
+-- export/email subscribers. `requested_volume_label` is stored as a
+-- snapshot at signup time so the request stays readable even if that
+-- volume is later renamed or removed.
 
 -- ---------------------------------------------------------
 -- 2. Admins
