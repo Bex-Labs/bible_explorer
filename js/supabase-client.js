@@ -1,5 +1,5 @@
 /**
- * Bible Explorer — Supabase client bootstrap
+ * Bible Explorer: Supabase client bootstrap
  * Loaded after the Supabase UMD bundle and config.js on every page
  * that needs backend access (signup + forum).
  */

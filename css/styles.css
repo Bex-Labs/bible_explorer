@@ -1,5 +1,5 @@
 /* =========================================================
-   Bible Explorer — shared stylesheet
+   Bible Explorer: shared stylesheet
    A warm, kid-friendly design system used across every page.
    ========================================================= */
 
@@ -460,3 +460,95 @@ img { max-width: 100%; display: block; }
 .text-center { text-align: center; }
 .mt-2 { margin-top: 2rem; }
 .mb-0 { margin-bottom: 0; }
+
+/* ---------- Admin page ---------- */
+.admin-gate {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.admin-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.8rem;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 2rem;
+}
+
+.admin-panel h2 { margin-bottom: 0.3rem; }
+.admin-panel > p.field-hint { margin-bottom: 1.4rem; }
+
+.admin-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.7em 0.6em;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.admin-table th {
+  font-family: var(--font-heading);
+  color: var(--color-secondary-dark);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--color-bg-alt);
+  display: block;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.btn-sm {
+  padding: 0.4em 0.9em;
+  font-size: 0.82rem;
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+.btn-danger:hover { background: #a3291d; }
+
+.status-pill {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2em 0.65em;
+  border-radius: 999px;
+}
+.status-pill.visible { background: rgba(79, 167, 135, 0.16); color: var(--color-accent-dark); }
+.status-pill.hidden { background: rgba(192, 57, 43, 0.12); color: var(--color-danger); }
+
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.field-inline {
+  margin-bottom: 0;
+}

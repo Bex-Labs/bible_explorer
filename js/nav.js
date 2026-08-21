@@ -1,5 +1,5 @@
 /**
- * Bible Explorer — shared nav behaviour (mobile menu + active link)
+ * Bible Explorer: shared nav behaviour (mobile menu + active link)
  */
 document.addEventListener("DOMContentLoaded", function () {
   const toggle = document.querySelector(".nav-toggle");

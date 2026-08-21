@@ -1,5 +1,5 @@
 /**
- * Bible Explorer — e-copy signup form handling
+ * Bible Explorer: e-copy signup form handling
  * Inserts a row into the `subscribers` table in Supabase.
  * See /supabase/schema.sql for the table + RLS policy that allows
  * this public, write-only insert.
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!window.bibleExplorerSupabaseReady) {
       showMessage(
-        "Signups aren't connected yet — the site owner still needs to add Supabase credentials in js/config.js.",
+        "Signups aren't connected yet. The site owner still needs to add Supabase credentials in js/config.js.",
         "error"
       );
       return;
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (error) {
       if (error.code === "23505") {
-        showMessage("Looks like that email is already signed up — thank you!", "success");
+        showMessage("Looks like that email is already signed up. Thank you!", "success");
       } else {
         console.error(error);
         showMessage("Something went wrong. Please try again in a moment.", "error");

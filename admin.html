@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Bible Explorer</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container nav">
+      <a href="index.html" class="nav-brand"><img src="assets/logo.svg" alt="Bible Explorer logo">Bible Explorer</a>
+      <span class="badge">Admin</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+
+        <div id="admin-not-ready" class="form-message error" style="display:none; max-width:100%; margin-bottom:2rem;">
+          The admin page isn't connected yet. Supabase credentials are missing in js/config.js.
+        </div>
+
+        <!-- Sign-in gate -->
+        <div id="admin-gate" class="admin-gate" style="display:none;">
+          <div class="auth-box">
+            <h1 style="margin-top:0;">Admin Sign In</h1>
+            <p class="field-hint">Enter the admin email address and we'll send a magic sign-in link. No password needed.</p>
+            <form id="admin-login-form">
+              <div class="field">
+                <label for="admin-login-email">Email address</label>
+                <input type="email" id="admin-login-email" name="email" required>
+              </div>
+              <button type="submit" class="btn btn-secondary btn-block">Email Me a Login Link</button>
+              <div id="admin-login-message" class="form-message" role="status"></div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Signed in, but not an admin -->
+        <div id="admin-denied" class="admin-gate text-center" style="display:none;">
+          <h1>Not an Admin Account</h1>
+          <p>You're signed in, but this email isn't on the admin allowlist. Ask whoever manages the site to add it in Supabase, or sign out and try a different email.</p>
+          <button id="admin-sign-out-btn-denied" class="btn btn-outline">Sign Out</button>
+        </div>
+
+        <!-- Admin content -->
+        <div id="admin-content" style="display:none;">
+          <div class="text-center mt-2" style="margin-bottom:2rem;">
+            <p id="admin-signed-in-as" class="field-hint mb-0"></p>
+            <button id="admin-sign-out-btn" class="btn btn-outline btn-sm" style="margin-top:0.6rem;">Sign Out</button>
+          </div>
+
+          <!-- Volumes panel -->
+          <div class="admin-panel">
+            <h2>Volumes</h2>
+            <p class="field-hint">Manage the print volumes shown on the Buy page: thumbnail, Amazon link, and e-copy download link. Changes save per row.</p>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Thumb</th>
+                    <th>Vol #</th>
+                    <th>Days</th>
+                    <th>Amazon URL</th>
+                    <th>Download URL</th>
+                    <th>New thumbnail</th>
+                    <th>New PDF</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="volumes-table-body">
+                  <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3>Add a New Volume</h3>
+            <form id="add-volume-form">
+              <div class="admin-form-grid">
+                <div class="field field-inline">
+                  <label for="new-volume-number">Volume #</label>
+                  <input type="number" id="new-volume-number" name="volume_number" required>
+                </div>
+                <div class="field field-inline">
+                  <label for="new-volume-days">Day range</label>
+                  <input type="text" id="new-volume-days" name="days_label" placeholder="Days 631–720" required>
+                </div>
+                <div class="field field-inline">
+                  <label for="new-volume-amazon">Amazon URL</label>
+                  <input type="text" id="new-volume-amazon" name="amazon_url" placeholder="https://amazon.ca/dp/...">
+                </div>
+                <div class="field field-inline">
+                  <label for="new-volume-thumb">Thumbnail image</label>
+                  <input type="file" id="new-volume-thumb" name="thumbnail_file" accept="image/*">
+                </div>
+                <div class="field field-inline">
+                  <label for="new-volume-pdf">E-copy PDF</label>
+                  <input type="file" id="new-volume-pdf" name="download_file" accept="application/pdf">
+                </div>
+                <div class="field field-inline">
+                  <button type="submit" class="btn btn-primary btn-block">Add Volume</button>
+                </div>
+              </div>
+              <div id="add-volume-message" class="form-message" role="status"></div>
+            </form>
+          </div>
+
+          <!-- Moderation panel -->
+          <div class="admin-panel">
+            <h2>Community Moderation</h2>
+            <p class="field-hint">Posts are visible immediately when readers share them. Hide or delete anything that shouldn't be public.</p>
+
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Reflection</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="posts-table-body">
+                  <tr><td colspan="5" class="empty-state">Loading…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

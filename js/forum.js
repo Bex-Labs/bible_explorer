@@ -1,5 +1,5 @@
 /**
- * Bible Explorer — community forum (micro-blog of lesson reflections)
+ * Bible Explorer: community forum (micro-blog of lesson reflections)
  * Uses Supabase Auth (magic link email) so posts are tied to a real
  * signed-in reader, and Row Level Security so anyone can read posts
  * but only the author can create/delete their own.
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!data || data.length === 0) {
       feedEl.innerHTML =
-        '<p class="empty-state">No reflections yet — be the first to share what you\'re learning!</p>';
+        '<p class="empty-state">No reflections yet. Be the first to share what you\'re learning!</p>';
       return;
     }
 

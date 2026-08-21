@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buy the Print Book — Bible Explorer</title>
-  <meta name="description" content="Buy the Bible Explorer print devotional on Amazon — 7 volumes and counting, each covering 90 days of Bible reading.">
+  <title>Buy the Print Book | Bible Explorer</title>
+  <meta name="description" content="Buy the Bible Explorer print devotional on Amazon: 7 volumes and counting, each covering 90 days of Bible reading.">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,14 +33,14 @@
       <div class="container text-center">
         <span class="eyebrow">Print Edition</span>
         <h1>Bring Bible Explorer Home</h1>
-        <p style="max-width:620px; margin:0 auto;">Bible Explorer is published in volumes — each one covers 90 days of daily Bible reading and devotional. There are 7 volumes so far (630 days), with more on the way. Start at Volume 1, or jump to wherever you left off.</p>
+        <p style="max-width:620px; margin:0 auto;">Bible Explorer is published in volumes: each one covers 90 days of daily Bible reading and devotional. There are 7 volumes so far (630 days), with more on the way. Start at Volume 1, or jump to wherever you left off.</p>
       </div>
     </section>
 
     <section class="section" style="padding-top:0;">
       <div class="container">
         <div class="region-grid" id="volume-grid">
-          <!-- Populated by JS from js/config.js AMAZON_VOLUMES -->
+          <p class="empty-state">Loading volumes…</p>
         </div>
         <p class="text-center field-hint mt-2">All volumes are available on Amazon.ca and ship to most countries worldwide. Ordering from outside Canada? Amazon will show shipping options and estimated delivery at checkout.</p>
         <p class="text-center field-hint">Prefer a digital copy? <a href="signup.html">Get a free e-copy by email</a> instead.</p>
@@ -53,7 +53,7 @@
       <div class="footer-grid">
         <div>
           <div class="nav-brand" style="color:#fff;"><img src="assets/logo.svg" alt="">Bible Explorer</div>
-          <p>A daily devotional that helps kids explore the whole Bible, one short lesson at a time — in print and online.</p>
+          <p>A daily devotional that helps kids explore the whole Bible, one short lesson at a time, in print and online.</p>
         </div>
         <div>
           <h4>Explore</h4>
@@ -75,14 +75,23 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/volumes.js"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      var volumes = (window.BIBLE_EXPLORER_CONFIG && window.BIBLE_EXPLORER_CONFIG.AMAZON_VOLUMES) || [];
+    document.addEventListener("DOMContentLoaded", async function () {
       var grid = document.getElementById("volume-grid");
+      var volumes = [];
+
+      try {
+        volumes = await window.bibleExplorerLoadVolumes();
+      } catch (e) {
+        console.error(e);
+      }
 
       if (!volumes.length) {
-        grid.innerHTML = '<p class="empty-state">Volumes aren\'t configured yet — check back soon.</p>';
+        grid.innerHTML = '<p class="empty-state">Volumes aren\'t configured yet. Check back soon.</p>';
         return;
       }
 
@@ -90,12 +99,26 @@
       volumes.forEach(function (v) {
         var card = document.createElement("div");
         card.className = "region-card";
+
+        var thumb = v.thumbnailUrl
+          ? '<img src="' + v.thumbnailUrl + '" alt="Volume ' + v.volume + ' cover" style="width:100%; max-width:140px; border-radius:8px; margin:0 auto 0.75rem; box-shadow:var(--shadow-soft);">'
+          : '<div class="flag">📘</div>';
+
+        var buyBtn = v.amazonUrl
+          ? '<a class="btn btn-primary btn-block mt-2" target="_blank" rel="noopener" style="margin-top:1rem;" href="' + v.amazonUrl + '">Buy on Amazon</a>'
+          : "";
+
+        var downloadBtn = v.downloadUrl
+          ? '<a class="btn btn-outline btn-block" style="margin-top:0.6rem;" target="_blank" rel="noopener" href="' + v.downloadUrl + '">Download E-Copy</a>'
+          : "";
+
         card.innerHTML =
-          '<div class="flag">📘</div>' +
+          thumb +
           "<h3>Volume " + v.volume + "</h3>" +
           '<p class="field-hint mb-0">' + v.days + "</p>" +
-          '<a class="btn btn-primary btn-block mt-2" target="_blank" rel="noopener" style="margin-top:1rem;">Buy on Amazon</a>';
-        card.querySelector("a").href = v.url;
+          buyBtn +
+          downloadBtn;
+
         grid.appendChild(card);
       });
     });
