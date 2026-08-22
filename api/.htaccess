@@ -7,3 +7,20 @@ RewriteCond %{HTTP:Authorization} ^(.+)$
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
 
 Options -Indexes
+
+# Raise PHP's own upload caps for this folder, only takes effect when
+# PHP runs as an Apache module. api/.user.ini covers the (more common)
+# CGI/FastCGI/LiteSpeed case, having both here means it works either
+# way without needing to know which one your host uses.
+<IfModule mod_php.c>
+  php_value upload_max_filesize 30M
+  php_value post_max_size 32M
+</IfModule>
+<IfModule mod_php7.c>
+  php_value upload_max_filesize 30M
+  php_value post_max_size 32M
+</IfModule>
+<IfModule mod_php8.c>
+  php_value upload_max_filesize 30M
+  php_value post_max_size 32M
+</IfModule>

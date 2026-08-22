@@ -51,7 +51,8 @@ bible-explorer/
 ├── supabase/
 │   └── schema.sql          Run this in Supabase to create tables + policies
 ├── api/
-│   └── upload.php          Admin-only e-copy PDF upload (self-hosted)
+│   ├── upload.php          Admin-only e-copy PDF upload (self-hosted)
+│   └── check-limits.php    Confirms live PHP upload limits, safe to delete
 └── uploads/                Where uploaded PDFs/images end up, publicly
     ├── downloads/            served, script execution disabled (.htaccess)
     └── thumbnails/
@@ -316,11 +317,22 @@ plain file.
 **Two things to check on your hosting** before this works:
 
 1. **PHP upload limits**: cPanel's default PHP settings often cap
-   uploads around 2-8 MB, too small for some e-copy PDFs. In cPanel,
-   go to **MultiPHP INI Editor**, pick the domain/PHP version this
-   site uses, and raise `upload_max_filesize` and `post_max_size` to
-   at least `30M` (this app's own cap is 25 MB per file, `post_max_size`
-   needs a little headroom above that for the rest of the form data).
+   uploads around 2-8 MB, too small for some e-copy PDFs. This repo
+   already raises them for you, no cPanel panel access needed:
+   `api/.user.ini` sets `upload_max_filesize`/`post_max_size` to 30M
+   for hosts where PHP runs as CGI/FastCGI/LiteSpeed (the most common
+   cPanel setup today), and `api/.htaccess` has a matching fallback
+   for the less common case where PHP runs as an Apache module. If
+   your host does expose **MultiPHP INI Editor** (Software section)
+   or **Select PHP Version**'s own options tab, either also works and
+   overrides the same settings from the panel side. Either way, visit
+   `https://yourdomain.com/api/check-limits.php` after deploying, it
+   reports the live `upload_max_filesize`/`post_max_size` values and
+   tells you plainly whether they're high enough, changes to
+   `.user.ini` can take a few minutes to kick in (PHP caches it
+   briefly), so refresh that page again if it still looks low right
+   after deploying. Safe to leave in place, or delete it once
+   confirmed, your choice.
 2. **The `Authorization` header reaching PHP**: most cPanel PHP setups
    pass this through fine, `api/.htaccess` includes a fallback rewrite
    rule for the setups that don't. If uploads fail with "Missing
