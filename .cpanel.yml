@@ -13,5 +13,5 @@
 # public_html, not a relative one.
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/CPANEL_USERNAME/public_html/
+    - export DEPLOYPATH=/home/nwatp5ft0uhr/public_html/
     - /bin/cp -r ./* $DEPLOYPATH
