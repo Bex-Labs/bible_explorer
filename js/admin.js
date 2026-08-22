@@ -5,9 +5,12 @@
  * email against the `admins` table. See /supabase/schema.sql.
  *
  * Two tabs once signed in as an admin:
- *  - Volumes: add/edit/delete cards backed by the `volumes` table,
- *    including uploading a thumbnail image and an e-copy download
- *    file to Supabase Storage.
+ *  - Volumes: add/edit/delete cards backed by the `volumes` table.
+ *    Thumbnail images upload to Supabase Storage; e-copy PDFs upload
+ *    to /api/upload.php instead, a small endpoint that saves them
+ *    right on this same cPanel host (see that file for the security
+ *    model: it re-checks admin access with Supabase before accepting
+ *    anything).
  *  - Moderation: hide/unhide or delete any forum post.
  *  - Shared Requests: readers can share a volume with a friend from
  *    the Buy page once signed in; this tab lists those requests so an
@@ -29,6 +32,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   const sb = window.bibleExplorerSupabase;
+
+  // Where e-copy PDFs get uploaded (see /api/upload.php). This only
+  // works once admin.html is served from a host that actually runs
+  // that PHP file, so it won't work in a plain local static-file
+  // preview, that's expected, not a bug.
+  const UPLOAD_ENDPOINT = "/api/upload.php";
 
   // =========================================================
   // Toast helper (replaces browser alert() for a nicer feel)
@@ -199,6 +208,40 @@ document.addEventListener("DOMContentLoaded", function () {
     return data.publicUrl;
   }
 
+  // E-copy PDFs upload to this same cPanel host instead of Supabase
+  // Storage (self-hosting the larger files). The endpoint re-checks
+  // that this session is really an admin before accepting anything,
+  // see /api/upload.php.
+  async function uploadDownloadFile(volumeNumber, file) {
+    const { data: sessionData } = await sb.auth.getSession();
+    const session = sessionData && sessionData.session;
+    if (!session) throw new Error("You're not signed in.");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("kind", "download");
+    formData.append("volume_number", volumeNumber);
+
+    const res = await fetch(UPLOAD_ENDPOINT, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + session.access_token },
+      body: formData,
+    });
+
+    let result = null;
+    try {
+      result = await res.json();
+    } catch (e) {
+      // handled below, res.ok/result checks cover a non-JSON response
+    }
+
+    if (!res.ok || !result || !result.url) {
+      throw new Error((result && result.error) || "Upload failed (HTTP " + res.status + ").");
+    }
+
+    return result.url;
+  }
+
   function wireFileButton(fileInput, labelEl, defaultLabel) {
     fileInput.addEventListener("change", function () {
       const file = fileInput.files[0];
@@ -268,7 +311,7 @@ document.addEventListener("DOMContentLoaded", function () {
           update.thumbnail_url = await uploadVolumeAsset("volume-thumbnails", update.volume_number, thumbFile);
         }
         if (downloadFile) {
-          update.download_url = await uploadVolumeAsset("volume-downloads", update.volume_number, downloadFile);
+          update.download_url = await uploadDownloadFile(update.volume_number, downloadFile);
         }
 
         update.updated_at = new Date().toISOString();
@@ -362,7 +405,7 @@ document.addEventListener("DOMContentLoaded", function () {
           insertRow.thumbnail_url = await uploadVolumeAsset("volume-thumbnails", volumeNumber, thumbFile);
         }
         if (downloadFile) {
-          insertRow.download_url = await uploadVolumeAsset("volume-downloads", volumeNumber, downloadFile);
+          insertRow.download_url = await uploadDownloadFile(volumeNumber, downloadFile);
         }
 
         const { error } = await sb.from("volumes").insert(insertRow);

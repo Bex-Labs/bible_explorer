@@ -48,8 +48,13 @@ bible-explorer/
 ├── assets/
 │   ├── logo.svg
 │   └── favicon.svg
-└── supabase/
-    └── schema.sql          Run this in Supabase to create tables + policies
+├── supabase/
+│   └── schema.sql          Run this in Supabase to create tables + policies
+├── api/
+│   └── upload.php          Admin-only e-copy PDF upload (self-hosted)
+└── uploads/                Where uploaded PDFs/images end up, publicly
+    ├── downloads/            served, script execution disabled (.htaccess)
+    └── thumbnails/
 ```
 
 ## 1. Supabase: already connected, finish the dashboard setup
@@ -108,6 +113,17 @@ magic-link email, click it, and you're in. From there:
 - **Edit a volume**: change any field in its table row (or attach a new
   thumbnail/PDF to replace the current one) and click **Save**.
 - **Delete a volume**: removes it from the Buy page immediately.
+
+Thumbnails upload to Supabase Storage, same as before. E-copy PDFs
+upload somewhere different: `/api/upload.php`, a small PHP script that
+saves the file right on this same cPanel hosting account instead of
+Supabase Storage (keeps the larger files off Supabase's free-tier
+storage/bandwidth caps). See "Self-hosted e-copy uploads" below for how
+that works and what it needs from your hosting. This only works once
+admin.html is served from a host that actually runs that PHP file, so
+uploading a PDF from the local static preview or from GitHub Pages
+won't work, that's expected, not a bug, you'd need to do that part on
+the live cPanel domain.
 
 The Buy page (`buy.html`) always reflects whatever is in the `volumes`
 table live, no code changes needed when you publish a new volume.
@@ -275,6 +291,45 @@ receiving script) and can be added later if you want it.
 > Security policies in `schema.sql` allow), so it's fine to commit even
 > in a public repo. Just don't ever put a Supabase **service role** key
 > in this file or anywhere client-side.
+
+## 10. Self-hosted e-copy uploads (api/upload.php)
+
+E-copy PDFs uploaded from admin.html are saved on this same cPanel
+hosting account (`/uploads/downloads/`) instead of Supabase Storage,
+this keeps the larger files off Supabase's free-tier storage/bandwidth
+limits, since hosting disk space and bandwidth here are already paid
+for. Thumbnails still go to Supabase Storage as before, they're small
+enough that it doesn't matter.
+
+**How it stays safe**, even though this endpoint has no login form of
+its own: every upload request has to include the admin's current
+Supabase sign-in token, and `api/upload.php` calls Supabase's own
+`is_admin()` check with that token before accepting anything, the same
+check every other admin action already depends on. It also only ever
+accepts a real PDF for an e-copy or a real image for a thumbnail
+(checked by the file's actual content, not its name), generates the
+saved filename itself rather than trusting the browser, and
+`uploads/.htaccess` turns off script execution for that whole folder,
+so nothing saved there can ever run as code, only ever be served as a
+plain file.
+
+**Two things to check on your hosting** before this works:
+
+1. **PHP upload limits**: cPanel's default PHP settings often cap
+   uploads around 2-8 MB, too small for some e-copy PDFs. In cPanel,
+   go to **MultiPHP INI Editor**, pick the domain/PHP version this
+   site uses, and raise `upload_max_filesize` and `post_max_size` to
+   at least `30M` (this app's own cap is 25 MB per file, `post_max_size`
+   needs a little headroom above that for the rest of the form data).
+2. **The `Authorization` header reaching PHP**: most cPanel PHP setups
+   pass this through fine, `api/.htaccess` includes a fallback rewrite
+   rule for the setups that don't. If uploads fail with "Missing
+   sign-in token" even though you're clearly signed in as an admin,
+   this is the first thing to check with your host.
+
+If you ever move hosts or the folder structure changes, the only
+thing to update is `$UPLOAD_ROOT` at the top of `api/upload.php` (and
+`UPLOAD_ENDPOINT` in `js/admin.js` if the script's URL path changes).
 
 ## Next steps / ideas
 

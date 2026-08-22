@@ -1,0 +1,9 @@
+# Bible Explorer: api/ folder
+# Some cPanel PHP setups (PHP-CGI/suPHP) don't pass the Authorization
+# header through to PHP by default, this forwards it so upload.php can
+# read the caller's Supabase sign-in token.
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.+)$
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
+Options -Indexes

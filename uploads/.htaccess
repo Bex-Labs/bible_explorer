@@ -1,0 +1,27 @@
+# Bible Explorer: uploads/ folder
+# Only ever serve files from here as plain static files, never as code,
+# even if something unexpected somehow ended up in this folder. This
+# applies to every subfolder underneath (downloads/, thumbnails/) too.
+Options -Indexes -ExecCGI
+
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+  php_flag engine off
+</IfModule>
+
+<IfModule mod_authz_core.c>
+  <FilesMatch "\.(php|phtml|php3|php4|php5|php7|pl|py|jsp|asp|sh|cgi)$">
+    Require all denied
+  </FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+  <FilesMatch "\.(php|phtml|php3|php4|php5|php7|pl|py|jsp|asp|sh|cgi)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>
