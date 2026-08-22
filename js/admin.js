@@ -9,6 +9,9 @@
  *    including uploading a thumbnail image and an e-copy download
  *    file to Supabase Storage.
  *  - Moderation: hide/unhide or delete any forum post.
+ *  - Shared Requests: readers can share a volume with a friend from
+ *    the Buy page once signed in; this tab lists those requests so an
+ *    admin can email the friend by hand and mark it Sent.
  */
 document.addEventListener("DOMContentLoaded", function () {
   const notReadyEl = document.getElementById("admin-not-ready");
@@ -92,6 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
     showOnly(contentEl);
     loadVolumes();
     loadPosts();
+    loadShares();
   }
 
   if (loginForm) {
@@ -143,6 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const tabPanels = {
     volumes: document.getElementById("tab-volumes"),
     moderation: document.getElementById("tab-moderation"),
+    shares: document.getElementById("tab-shares"),
   };
 
   tabButtons.forEach(function (btn) {
@@ -161,6 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const statVolumes = document.getElementById("stat-volumes");
   const statVisible = document.getElementById("stat-visible-posts");
   const statHidden = document.getElementById("stat-hidden-posts");
+  const statPendingShares = document.getElementById("stat-pending-shares");
 
   // =========================================================
   // Volumes tab
@@ -462,6 +468,89 @@ document.addEventListener("DOMContentLoaded", function () {
     postsTableBody.innerHTML = "";
     data.forEach(function (p) {
       postsTableBody.appendChild(renderPostRow(p));
+    });
+  }
+
+  // =========================================================
+  // Shared Requests tab
+  // =========================================================
+  const sharesTableBody = document.getElementById("shares-table-body");
+
+  function renderShareRow(s) {
+    const tr = document.createElement("tr");
+    const date = new Date(s.created_at).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    const toggleLabel = s.status === "pending" ? "Mark Sent" : "Mark Pending";
+    const esc = function (str) { return (str || "").replace(/</g, "&lt;"); };
+
+    tr.innerHTML =
+      '<td>' + esc(s.recipient_name) + '<br><span class="field-hint mb-0">' + esc(s.recipient_email) + "</span></td>" +
+      "<td>Volume " + s.volume_number + '<br><span class="field-hint mb-0">' + esc(s.volume_label) + "</span></td>" +
+      "<td>" + esc(s.shared_by_email) + "</td>" +
+      "<td>" + date + "</td>" +
+      '<td><span class="status-pill ' + s.status + '">' + s.status + "</span></td>" +
+      '<td class="admin-actions">' +
+      '<button type="button" class="btn btn-outline btn-sm s-toggle">' + toggleLabel + "</button>" +
+      '<button type="button" class="btn btn-danger btn-sm s-delete">Delete</button>' +
+      "</td>";
+
+    tr.querySelector(".s-toggle").addEventListener("click", async function () {
+      const newStatus = s.status === "pending" ? "sent" : "pending";
+      const { error } = await sb.from("volume_shares").update({ status: newStatus }).eq("id", s.id);
+      if (error) {
+        console.error(error);
+        toast("Couldn't update that share request: " + error.message, "error");
+        return;
+      }
+      toast(newStatus === "sent" ? "Marked as sent." : "Marked as pending.", "success");
+      loadShares();
+    });
+
+    tr.querySelector(".s-delete").addEventListener("click", async function () {
+      if (!confirm("Delete this share request?")) return;
+      const { error } = await sb.from("volume_shares").delete().eq("id", s.id);
+      if (error) {
+        console.error(error);
+        toast("Couldn't delete that share request: " + error.message, "error");
+        return;
+      }
+      toast("Share request deleted.", "success");
+      loadShares();
+    });
+
+    return tr;
+  }
+
+  async function loadShares() {
+    sharesTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Loading share requests…</td></tr>';
+    const { data, error } = await sb
+      .from("volume_shares")
+      .select("id, volume_number, volume_label, shared_by_email, recipient_name, recipient_email, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    if (error) {
+      console.error(error);
+      sharesTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">Couldn\'t load share requests.</td></tr>';
+      return;
+    }
+
+    if (statPendingShares) {
+      statPendingShares.textContent = data ? data.filter(function (s) { return s.status === "pending"; }).length : "0";
+    }
+
+    if (!data || data.length === 0) {
+      sharesTableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No share requests yet.</td></tr>';
+      return;
+    }
+
+    sharesTableBody.innerHTML = "";
+    data.forEach(function (s) {
+      sharesTableBody.appendChild(renderShareRow(s));
     });
   }
 

@@ -429,6 +429,22 @@ img { max-width: 100%; display: block; }
   padding: 2rem 1rem;
 }
 
+/* ---------- Buy page: share-a-friend box ---------- */
+.share-box:empty { margin: 0; }
+.share-form {
+  background: var(--color-bg-alt);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-top: 0.6rem;
+  text-align: left;
+}
+.share-form .field { margin-bottom: 0.8rem; }
+.share-form .field label {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+.share-message { margin-top: 0.6rem; }
+
 /* ---------- Footer ---------- */
 .site-footer {
   background: var(--color-secondary-dark);
@@ -833,6 +849,8 @@ img { max-width: 100%; display: block; }
 }
 .status-pill.visible { background: rgba(79, 167, 135, 0.16); color: var(--color-accent-dark); }
 .status-pill.hidden { background: rgba(192, 57, 43, 0.12); color: var(--color-danger); }
+.status-pill.pending { background: rgba(224, 122, 44, 0.16); color: var(--color-primary-dark); }
+.status-pill.sent { background: rgba(79, 167, 135, 0.16); color: var(--color-accent-dark); }
 
 /* ---------- Toast ---------- */
 .admin-toast {

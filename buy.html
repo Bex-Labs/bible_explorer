@@ -39,6 +39,29 @@
 
     <section class="section" style="padding-top:0;">
       <div class="container">
+
+        <div id="buy-not-ready" class="form-message error" style="display:none; max-width:100%; margin-bottom:2rem;">
+          Sign-in for free e-copy downloads isn't connected yet. The site owner still needs to add Supabase credentials in js/config.js.
+        </div>
+
+        <div id="buy-auth-box" class="auth-box" style="max-width:480px; margin:0 auto 2rem;">
+          <h3 style="margin-top:0;">Sign In to Unlock Free Downloads</h3>
+          <p class="field-hint">Buying on Amazon works for everyone, no sign-in needed. To download a free e-copy, sign in with just your email, we'll send a magic link, no password required.</p>
+          <form id="buy-login-form">
+            <div class="field">
+              <label for="buy-login-email">Email address</label>
+              <input type="email" id="buy-login-email" name="email" required>
+            </div>
+            <button type="submit" class="btn btn-secondary btn-block">Email Me a Login Link</button>
+            <div id="buy-login-message" class="form-message" role="status"></div>
+          </form>
+        </div>
+
+        <div id="buy-signed-in-box" class="card text-center" style="max-width:480px; margin:0 auto 2rem; display:none;">
+          <p id="buy-signed-in-as" class="field-hint mb-0"></p>
+          <button id="buy-sign-out-btn" class="btn btn-outline btn-sm" style="margin-top:0.6rem;">Sign Out</button>
+        </div>
+
         <div class="region-grid" id="volume-grid">
           <p class="empty-state">Loading volumes…</p>
         </div>
@@ -79,50 +102,7 @@
   <script src="js/config.js"></script>
   <script src="js/supabase-client.js"></script>
   <script src="js/volumes.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-      var grid = document.getElementById("volume-grid");
-      var volumes = [];
-
-      try {
-        volumes = await window.bibleExplorerLoadVolumes();
-      } catch (e) {
-        console.error(e);
-      }
-
-      if (!volumes.length) {
-        grid.innerHTML = '<p class="empty-state">Volumes aren\'t configured yet. Check back soon.</p>';
-        return;
-      }
-
-      grid.innerHTML = "";
-      volumes.forEach(function (v) {
-        var card = document.createElement("div");
-        card.className = "region-card";
-
-        var thumb = v.thumbnailUrl
-          ? '<img src="' + v.thumbnailUrl + '" alt="Volume ' + v.volume + ' cover" style="width:100%; max-width:140px; border-radius:8px; margin:0 auto 0.75rem; box-shadow:var(--shadow-soft);">'
-          : '<div class="flag">📘</div>';
-
-        var buyBtn = v.amazonUrl
-          ? '<a class="btn btn-primary btn-block mt-2" target="_blank" rel="noopener" style="margin-top:1rem;" href="' + v.amazonUrl + '">Buy on Amazon</a>'
-          : "";
-
-        var downloadBtn = v.downloadUrl
-          ? '<a class="btn btn-outline btn-block" style="margin-top:0.6rem;" target="_blank" rel="noopener" href="' + v.downloadUrl + '">Download E-Copy</a>'
-          : "";
-
-        card.innerHTML =
-          thumb +
-          "<h3>Volume " + v.volume + "</h3>" +
-          '<p class="field-hint mb-0">' + v.days + "</p>" +
-          buyBtn +
-          downloadBtn;
-
-        grid.appendChild(card);
-      });
-    });
-  </script>
+  <script src="js/buy.js"></script>
   <script src="js/nav.js"></script>
 </body>
 </html>

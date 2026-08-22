@@ -227,7 +227,65 @@ create index if not exists posts_created_at_idx
   on public.posts (created_at desc);
 
 -- ---------------------------------------------------------
--- 5. Storage: volume thumbnails + e-copy download files
+-- 5. Volume shares: "share this volume with a friend" requests
+-- ---------------------------------------------------------
+-- Filled in from buy.html when a signed-in reader shares a volume with
+-- someone else's name and email. Nobody is emailed automatically yet,
+-- admin.html's Shared Requests tab lists these so an admin can follow
+-- up by hand. See the "Actually send an email too" note near the
+-- bottom of README.md for the automated version of this.
+create table if not exists public.volume_shares (
+  id uuid primary key default gen_random_uuid(),
+  volume_number int not null,
+  volume_label text,
+  shared_by_email text,
+  recipient_name text not null,
+  recipient_email text not null,
+  status text not null default 'pending' check (status in ('pending', 'sent')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.volume_shares enable row level security;
+
+-- Only signed-in readers can create a share request. That matches the
+-- sign-in requirement on buy.html's download button, since the share
+-- box only appears once someone is signed in.
+drop policy if exists "Signed-in users can create share requests" on public.volume_shares;
+create policy "Signed-in users can create share requests"
+  on public.volume_shares
+  for insert
+  to authenticated
+  with check (true);
+
+-- Nobody can read this table from the client except admins (keeps
+-- recipient emails private, same spirit as subscribers).
+drop policy if exists "Admins can read share requests" on public.volume_shares;
+create policy "Admins can read share requests"
+  on public.volume_shares
+  for select
+  to authenticated
+  using (public.is_admin());
+
+drop policy if exists "Admins can update share requests" on public.volume_shares;
+create policy "Admins can update share requests"
+  on public.volume_shares
+  for update
+  to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
+
+drop policy if exists "Admins can delete share requests" on public.volume_shares;
+create policy "Admins can delete share requests"
+  on public.volume_shares
+  for delete
+  to authenticated
+  using (public.is_admin());
+
+create index if not exists volume_shares_created_at_idx
+  on public.volume_shares (created_at desc);
+
+-- ---------------------------------------------------------
+-- 6. Storage: volume thumbnails + e-copy download files
 -- ---------------------------------------------------------
 insert into storage.buckets (id, name, public)
 values ('volume-thumbnails', 'volume-thumbnails', true)
@@ -291,3 +349,8 @@ create policy "Admins can delete volume assets"
 --   on `subscribers` insert, calling an email provider (Resend,
 --   Postmark, SendGrid, etc.). That's a natural next step once the
 --   site is live and collecting signups.
+-- * The same is true for `volume_shares`: right now a "share this
+--   volume" request from buy.html just gets logged to that table for
+--   an admin to see and email by hand. A Database Webhook on
+--   `volume_shares` insert, wired to the same kind of Edge Function,
+--   would send the recipient a signup link automatically instead.

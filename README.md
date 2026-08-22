@@ -6,11 +6,14 @@ A daily Bible devotional site for kids. Static HTML/CSS/JS site with a
 - **Free e-copy requests**: pick a volume, get an instant download link
   right on the page (no email delivery needed) if that volume has one
   set up; the request is also logged to a worldwide subscriber list
-- **Buy the print book** (Amazon links + thumbnails, by volume)
+- **Buy the print book** (Amazon links + thumbnails, by volume), and
+  sign in with a magic link to unlock the free e-copy download for any
+  volume, then share that volume with a friend by name + email
 - **Community forum**: a simple micro-blog where readers post short
   reflections on each day's lesson
 - **Admin page**: add/edit/remove volumes (with thumbnail + e-copy PDF
-  upload) and moderate forum posts, gated to allowlisted admin emails
+  upload), moderate forum posts, and follow up on shared-volume
+  requests, all gated to allowlisted admin emails
 
 No build step, no framework. Every page is a plain `.html` file, so it
 deploys anywhere that serves static files (GitHub Pages, Netlify, Vercel,
@@ -27,7 +30,7 @@ bible-explorer/
 ├── about.html           About the devotional
 ├── reading-plan.html    How the reading plan works + sample lessons
 ├── signup.html          Request a volume, get an instant download link
-├── buy.html               Volumes for sale, loaded live from Supabase
+├── buy.html               Volumes for sale, sign in to unlock downloads
 ├── forum.html             Community forum (Supabase Auth + posts)
 ├── admin.html             Admin: manage volumes + moderate posts
 ├── 404.html                Not-found page
@@ -39,8 +42,9 @@ bible-explorer/
 │   ├── volumes.js           Loads the volume catalog for buy.html
 │   ├── nav.js               Mobile nav toggle + active link highlighting
 │   ├── signup.js             Signup form → `subscribers` table
+│   ├── buy.js                 Sign-in gate for downloads + share-a-friend
 │   ├── forum.js               Auth + posts → `posts` table
-│   └── admin.js                Admin auth + volumes/moderation panels
+│   └── admin.js                Admin auth + volumes/moderation/shares panels
 ├── assets/
 │   ├── logo.svg
 │   └── favicon.svg
@@ -73,6 +77,10 @@ will actually work:
    - `posts`: the forum's reflections, now with a `status` column
      (`visible`/`hidden`). Public reads only see `visible` posts;
      admins see and can toggle/delete everything.
+   - `volume_shares`: "share this volume with a friend" requests from
+     buy.html (recipient name/email, which volume, who shared it).
+     Only signed-in readers can create one; only admins can read,
+     update, or delete them from the client.
    - Two Storage buckets, `volume-thumbnails` and `volume-downloads`
      (both public-read, admin-only write) for volume cover images and
      e-copy PDFs.
@@ -81,8 +89,8 @@ will actually work:
 3. **Authentication → URL Configuration**: add your deployed site URL
    (e.g. `https://bex-labs.github.io/bible_explorer/`, or your custom
    domain, plus `http://localhost:8080` while testing) to the allowed
-   redirect URLs. This covers magic-link sign-in on both the forum and
-   the admin page.
+   redirect URLs. This covers magic-link sign-in on the forum, the
+   admin page, and the Buy page's download unlock.
 
 If you ever need to rotate the key or point at a different Supabase
 project, update `SUPABASE_URL` / `SUPABASE_ANON_KEY` in `js/config.js`
@@ -127,7 +135,27 @@ as before: add a download link for it in `admin.html`. There's still no
 automated email step, "Actually send the e-copies" below covers that as
 a future option if you want signup to also trigger an email.
 
-## 4. Moderating the community forum
+## 4. Downloading from the Buy page, and sharing with a friend
+
+`buy.html` shows every volume to everyone: no sign-in is needed to
+click **Buy on Amazon**. Downloading the free e-copy is different:
+each volume with a download link shows a **Sign In to Unlock Free
+Downloads** box instead of the download button until the visitor signs
+in with a magic link (same one-click flow as the Community forum and
+admin.html). Once signed in:
+
+- Every volume that has a download link now shows a real
+  **Download E-Copy** button.
+- Next to it, an **✉️ Share This Volume** button opens a small form for
+  a friend's name and email. Submitting it saves a row to
+  `volume_shares`, it does not send an email yet.
+- That friend isn't emailed automatically. `admin.html`'s new
+  **Shared Requests** tab lists every request (name, email, volume,
+  who shared it) so an admin can send them a signup link by hand, then
+  mark it **Mark Sent**. See "Actually send an email too" below for
+  the fully automated version of this.
+
+## 5. Moderating the community forum
 
 Also on `admin.html`, the **Community Moderation** panel lists every
 post (newest first) with **Hide**/**Unhide** and **Delete** buttons.
@@ -136,7 +164,7 @@ it from the public forum feed right away without deleting it (useful if
 you want to review before permanently removing), and Delete is
 permanent.
 
-## 5. Preview locally
+## 6. Preview locally
 
 Any static file server works, e.g.:
 
@@ -152,7 +180,7 @@ Then open `http://localhost:8080` (or whatever port it prints).
 > some browsers restrict `fetch`/CORS on `file://`. A local server is
 > more reliable, especially for testing the forum/signup.
 
-## 6. Deploy
+## 7. Deploy
 
 Because this is a plain static site, you can deploy it to:
 
@@ -165,7 +193,7 @@ Remember to add the deployed URL to Supabase's **Authentication → URL
 Configuration → Redirect URLs**, or magic-link sign-in on the forum page
 will fail after deployment.
 
-## 7. Pushing to GitHub
+## 8. Pushing to GitHub
 
 The repo already exists at https://github.com/Bex-Labs/bible_explorer.
 From this folder:
@@ -194,11 +222,13 @@ remote has nothing you need to keep.
 ## Next steps / ideas
 
 - **Actually send an email too**: right now, requesting a volume shows
-  an instant download link on the page instead of emailing anything.
-  If you also want a copy emailed (as a backup, or for volumes without
-  a direct download link yet), a natural next step is a Supabase
-  Database Webhook on `subscribers` insert → a Supabase Edge Function →
-  an email provider (Resend, Postmark, SendGrid) that emails the PDF.
+  an instant download link on the page instead of emailing anything,
+  and sharing a volume with a friend just saves that request for an
+  admin to email by hand. If you want either of these automated, a
+  natural next step is a Supabase Database Webhook (on `subscribers`
+  insert, or on `volume_shares` insert) → a Supabase Edge Function →
+  an email provider (Resend, Postmark, SendGrid) that emails the PDF
+  or the signup link.
 - **More Amazon marketplaces**: links are currently Amazon.ca only. If
   you get dedicated .com/.co.uk listings later, add a second URL column
   (or a small `region` table) and extend `buy.html` / `admin.html` to

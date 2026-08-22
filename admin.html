@@ -85,11 +85,16 @@
               <div class="num" id="stat-hidden-posts">–</div>
               <div class="label">Hidden posts</div>
             </div>
+            <div class="admin-stat">
+              <div class="num" id="stat-pending-shares">–</div>
+              <div class="label">Pending shares</div>
+            </div>
           </div>
 
           <div class="admin-tabs">
             <button type="button" class="admin-tab active" data-tab="volumes">Volumes</button>
             <button type="button" class="admin-tab" data-tab="moderation">Community Moderation</button>
+            <button type="button" class="admin-tab" data-tab="shares">Shared Requests</button>
           </div>
 
           <!-- Volumes tab -->
@@ -164,6 +169,36 @@
                   </thead>
                   <tbody id="posts-table-body">
                     <tr><td colspan="5" class="empty-state">Loading…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Shared Requests tab -->
+          <div class="admin-tab-panel" id="tab-shares">
+            <div class="admin-panel">
+              <div class="admin-panel-head">
+                <div>
+                  <h2>Shared Requests</h2>
+                  <p class="field-hint">A signed-in reader shared a volume with a friend on the Buy page. No email goes out automatically yet, so send it yourself, then mark it Sent.</p>
+                </div>
+              </div>
+
+              <div class="admin-table-wrap">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Friend</th>
+                      <th>Volume</th>
+                      <th>Shared By</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="shares-table-body">
+                    <tr><td colspan="6" class="empty-state">Loading…</td></tr>
                   </tbody>
                 </table>
               </div>
