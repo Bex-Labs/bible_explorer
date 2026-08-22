@@ -213,6 +213,63 @@ in it, pull first (`git pull origin main --allow-unrelated-histories`)
 or push with `git push -u origin main --force` only if you're sure the
 remote has nothing you need to keep.
 
+## 9. Deploying to cPanel (replacing the old site)
+
+This site can also be deployed straight from GitHub using cPanel's
+**Git Version Control** feature, so your production domain runs
+Bible Explorer instead of (or alongside) GitHub Pages. This repo
+includes a `.cpanel.yml` file that does the actual "copy files into
+public_html" step; you just need to fill in your cPanel username and
+wire up the repo once.
+
+**Before you start:** back up whatever is currently in `public_html`
+for this domain (cPanel → File Manager → select everything in
+`public_html` → Compress → download the zip, or grab it over FTP).
+Deploying will overwrite those files.
+
+1. **Edit `.cpanel.yml`** in this repo: replace `CPANEL_USERNAME` in
+   `export DEPLOYPATH=/home/CPANEL_USERNAME/public_html/` with your
+   real cPanel username (shown in the top right of the cPanel
+   dashboard, or in WHM). Commit and push that change to GitHub.
+2. In cPanel, go to **Files → Git™ Version Control → Create**.
+   - **Clone URL**: `https://github.com/Bex-Labs/bible_explorer.git`
+   - **Repository Path**: something *outside* `public_html`, e.g.
+     `/home/CPANEL_USERNAME/repositories/bible_explorer`. Don't point
+     this at `public_html` directly, it needs to stay a plain git
+     clone; `.cpanel.yml`'s job is to copy the files over from here.
+   - Click **Create**. If the repo were private you'd need a deploy
+     key, but since it's already public on GitHub (that's how GitHub
+     Pages serves it) a plain HTTPS clone should just work.
+3. Back on the Git Version Control list, click **Manage** on the new
+   repo, then the **Pull or Deploy** tab:
+   - **Update from Remote** pulls the latest commit from GitHub into
+     that clone (this is a `git pull`, nothing is live yet).
+   - **Deploy HEAD Commit** runs `.cpanel.yml`'s task, copying the
+     site's files into `public_html`. This is the step that actually
+     makes it live.
+4. Check the domain in a browser. If it doesn't look right, confirm
+   `DEPLOYPATH` in `.cpanel.yml` matches the exact `public_html` path
+   cPanel showed you when creating the repository.
+5. **Enable SSL** for the domain if it isn't already (cPanel →
+   Security → SSL/TLS Status → Run AutoSSL), so the site loads over
+   `https://`.
+6. **Add the domain to Supabase**: Authentication → URL Configuration
+   → Redirect URLs, add your live domain (e.g.
+   `https://yourdomain.com/forum.html`, `/admin.html`, and `/buy.html`,
+   or a wildcard like `https://yourdomain.com/*` if your Supabase
+   project's redirect matching supports it). Keep the existing GitHub
+   Pages URL in that list too if you're keeping Pages around as a
+   staging copy, both can coexist.
+
+**Going forward**, whenever you push a change to GitHub, the cPanel
+domain does *not* update automatically, you need to go back into
+**Git Version Control → Manage → Pull or Deploy** and click
+**Update from Remote** then **Deploy HEAD Commit** again each time.
+If that becomes annoying, a next step is wiring a GitHub webhook to
+call cPanel's UAPI/WHM API to trigger that pull+deploy automatically
+on every push, that's a bit more setup (an API token and a small
+receiving script) and can be added later if you want it.
+
 > Note: `js/config.js` now contains the real Supabase publishable key.
 > That key is meant to be public (it only grants what the Row Level
 > Security policies in `schema.sql` allow), so it's fine to commit even

@@ -1,0 +1,17 @@
+---
+# cPanel Git Version Control: deployment tasks
+# ------------------------------------------------
+# This file only matters if you clone this repo using cPanel's
+# "Git Version Control" feature. When you click "Deploy HEAD Commit"
+# in that UI, cPanel runs the commands below, which copy this static
+# site's files out of the repo clone and into your live public_html
+# folder.
+#
+# Before this works, replace CPANEL_USERNAME below with your actual
+# cPanel account username (visible in the top right of the cPanel
+# dashboard, or in WHM). The path must be the absolute path to your
+# public_html, not a relative one.
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/CPANEL_USERNAME/public_html/
+    - /bin/cp -r ./* $DEPLOYPATH
