@@ -28,7 +28,6 @@ Cloudflare Pages, etc.) and is easy to hand-edit later.
 bible-explorer/
 ├── index.html          Home page
 ├── about.html           About the devotional
-├── reading-plan.html    How the reading plan works + sample lessons
 ├── signup.html          Request a volume, get an instant download link
 ├── buy.html               Volumes for sale, sign in to unlock downloads
 ├── forum.html             Community forum (Supabase Auth + posts)
@@ -368,7 +367,3 @@ thing to update is `$UPLOAD_ROOT` at the top of `api/upload.php` (and
   anything is public, change the `posts.status` default from `'visible'`
   to `'pending'`, add `'pending'` to the allowed status values, and add
   an **Approve** action next to Hide/Delete in `admin.html`.
-- **Daily lesson content**: `reading-plan.html` currently shows three
-  static sample lessons. If you want the *actual* daily lesson driven by
-  today's date, that's a good candidate for a `lessons` table in
-  Supabase, keyed by day number.
