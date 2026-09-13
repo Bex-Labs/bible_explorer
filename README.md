@@ -46,7 +46,8 @@ bible-explorer/
 │   ├── forum.js               Auth + posts → `posts` table
 │   └── admin.js                Admin auth + volumes/moderation/shares panels
 ├── assets/
-│   ├── logo.svg
+│   ├── Biblexplorer_logo.gif   Site logo, used in the header + footer
+│   ├── logo.svg                  Original placeholder logo, unused now
 │   └── favicon.svg
 ├── supabase/
 │   └── schema.sql          Run this in Supabase to create tables + policies
@@ -357,8 +358,11 @@ thing to update is `$UPLOAD_ROOT` at the top of `api/upload.php` (and
   you get dedicated .com/.co.uk listings later, add a second URL column
   (or a small `region` table) and extend `buy.html` / `admin.html` to
   show the right link per visitor's region.
-- **Real branding**: swap `assets/logo.svg` / `assets/favicon.svg` and
-  the color variables at the top of `css/styles.css` for your brand.
+- **Real branding**: the logo is `assets/Biblexplorer_logo.gif` (swap
+  that file, or update the `assets/Biblexplorer_logo.gif` references
+  across the HTML pages to point elsewhere), `assets/favicon.svg` for
+  the browser tab icon, and the color variables at the top of
+  `css/styles.css` for the rest of the brand.
 - **Approval-first moderation**: posts currently go live immediately
   and are only removed after the fact. If you'd rather review before
   anything is public, change the `posts.status` default from `'visible'`

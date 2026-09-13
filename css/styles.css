@@ -146,7 +146,7 @@ img { max-width: 100%; display: block; }
   color: var(--color-secondary-dark);
 }
 .nav-brand:hover { text-decoration: none; }
-.nav-brand img { width: 36px; height: 36px; }
+.nav-brand img { height: 36px; width: auto; max-width: 64px; object-fit: contain; }
 
 .nav-links {
   display: flex;
